@@ -129,6 +129,7 @@ class KeybindingsConfig:
     save_size: str = "H"  # Save the scratch pane size (follow mode only)
     flip_position: str = "f"  # Move the scratch pane between top and left
     fold: str = "w"  # Show or hide the sessions folded at the bottom of the list
+    notes: str = "N"  # Show or hide the [tui] notes file under the sessions
     # In a brief view, the questions under what a lemon needs from you.
     question_previous: str = "["
     question_next: str = "]"
@@ -164,6 +165,8 @@ class TuiConfig:
     fold_statuses: list[str] = field(default_factory=list)
     # The scratch pane's title bar and bottom edge while it will receive keys.
     focus_color: str = "#2bd9cf"
+    # A Markdown file shown under the sessions when they are cards. None shows nothing.
+    notes: Path | None = None
     keybindings: KeybindingsConfig = field(default_factory=KeybindingsConfig)
     # Override the label shown for each backend in the TUI.
     # Keys are channel prefixes (claude, codex, openclaw, opencode); values are display strings.
@@ -357,6 +360,18 @@ def _card_fields(raw: object) -> tuple[str, ...]:
     return tuple(dict.fromkeys(name for name in raw if name in CARD_FIELDS))
 
 
+def _notes(raw: object) -> Path | None:
+    """`[tui] notes`, reporting anything that is not a path."""
+    if raw is None or raw == "":
+        return None
+    if not isinstance(raw, str):
+        print(
+            f"Warning: [tui] notes must be a file path, not {type(raw).__name__}", file=sys.stderr
+        )
+        return None
+    return Path(raw).expanduser()
+
+
 def _vaults(raw: object) -> tuple[Path, ...]:
     """`[brief] vaults`, reporting and skipping anything that is not a directory."""
     if not isinstance(raw, list):
@@ -489,6 +504,7 @@ def _parse_config(data: dict[str, Any]) -> Config:
         brief_names_in_inbox=tui_data.get("brief_names_in_inbox", False),
         fold_statuses=list(tui_data.get("fold_statuses", [])),
         focus_color=tui_data.get("focus_color", "#2bd9cf"),
+        notes=_notes(tui_data.get("notes")),
         keybindings=keybindings,
         backend_labels=tui_data.get("backend_labels", {}),
     )

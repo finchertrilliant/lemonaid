@@ -129,6 +129,7 @@ The name may come from the interpreter's command line or the pane title. Add
 | `brief_names_in_inbox` | `false` | Show each attached brief's name after its session name (`lemonaid HQ · BlessBar`), in both layouts. Sessions without an attached brief have none. |
 | `fold_statuses` | `[]` | Brief statuses whose sessions fold into one group at the bottom of the list (see below). |
 | `focus_color` | `"#2bd9cf"` | The scratch pane's title bar and bottom edge while its tmux pane will receive keys. Any Textual colour; the title text turns black or white to contrast with it. |
+| `notes` | *(unset)* | A Markdown file to show under the sessions when they are cards (see below). |
 
 With `brief_status = true`, a card whose session has an attached brief with a
 `Status:` line is drawn from that brief:
@@ -245,6 +246,38 @@ card_fields = ["project", "branch"]   # drop the time, which mostly repeats the 
 | ![time, project, branch](images/inbox-card-fields-time.png) | ![project, branch](images/inbox-card-fields-no-time.png) |
 
 An unknown name is skipped with a warning when the config loads.
+
+### Notes under the sessions
+
+`notes` names a Markdown file that stays in view under the cards in a sidebar,
+for anything you want in sight while you work: key hints while you learn tmux,
+a checklist, a reminder. Give an absolute path or one that starts with `~`. A
+relative path is read from the directory `lma` started in.
+
+```toml
+[tui]
+notes = "~/.config/lemonaid/notes.md"
+```
+
+```markdown
+**tmux** · prefix is `Ctrl-b`
+
+- `c` new window · `n` next · `w` pick
+- `%` split side by side · `"` stacked
+- `z` zoom pane · `[` scroll, `q` to stop
+```
+
+- The notes take the height of their content, up to 40% of the space under the
+  title bar. Longer notes scroll inside their panel with the mouse wheel; the
+  panel never takes keyboard focus, so the keys keep acting on the list. Cards
+  size themselves to the rest.
+- An edit to the file shows on the next refresh. You do not need to restart
+  the pane.
+- `N` hides the notes and shows them again. The key is bound only when
+  `notes` is set. A restarted pane shows them again.
+- A top strip, which has columns rather than cards, never shows the notes. A
+  brief that replaces the sidebar hides them until the inbox comes back.
+- A path that cannot be read shows `No notes at` and the path.
 
 ### `[tui.backend_labels]`
 

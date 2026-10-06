@@ -1,3 +1,9 @@
+# 0.73.0 (2026-10-06)
+
+#### Added
+
+- **Keep your own notes in view under the sessions.** Set `[tui] notes` to a Markdown file, and the sidebar shows it under the cards: key hints while you learn tmux, a checklist, anything you want in sight. The notes take up to 40% of the space under the title bar and scroll past that; the cards size themselves to the rest. An edit to the file shows on the next refresh. `N` hides the notes and shows them again. A top strip never shows them.
+
 # 0.72.0 (2026-10-06)
 
 #### Added

@@ -59,6 +59,7 @@ def _inbox(kb: "KeybindingsConfig") -> dict[str, abc.Iterable[str]]:
         "last": [kb.last, "end"],
         "save_size": kb.save_size,
         "fold": kb.fold,
+        "notes": kb.notes,
         "filter_history": ["/"],
         "patch_claude": ["P"],
         **({f"jump_to_{d}": [d] for d in _JUMP_DIGITS} if kb.jump_by_number else {}),

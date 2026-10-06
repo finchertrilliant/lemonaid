@@ -17,6 +17,7 @@ All keybindings in the `lma` TUI are configurable via `~/.config/lemonaid/config
 | `s` | Snooze session (pick a duration) |
 | `S` | Toggle snoozed view |
 | `w` | Show or hide the folded sessions, when `[tui] fold_statuses` is set |
+| `N` | Show or hide your notes under the sessions, when `[tui] notes` is set |
 | `p` | Pin the session below any other pins, or unpin it |
 | `Shift`+`↑` / `Shift`+`↓` | Move a pinned session up or down one slot |
 | `z` | Undo the last inbox change |
@@ -212,6 +213,7 @@ tmux_resume = "T"  # spawn tmux session from history
 save_size = "H"  # save scratch pane size (follow mode)
 flip_position = "f"  # move the scratch pane between top and left
 fold = "w"  # show or hide folded sessions (needs [tui] fold_statuses)
+notes = "N"  # show or hide your notes (needs [tui] notes)
 question_previous = "["  # in a brief view, the previous question
 question_next = "]"  # in a brief view, the next question
 answer = "a"  # in a brief view, answer the selected question

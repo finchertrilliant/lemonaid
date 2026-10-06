@@ -54,6 +54,7 @@ _SECTIONS: list[tuple[str, list[tuple[str, str]]]] = [
         [
             ("history", "Toggle session history"),
             ("snoozed_list", "Show snoozed sessions"),
+            ("notes", "Show or hide your notes (tui.notes)"),
             ("flip_position", "Move the scratch pane between top and left"),
             ("save_size", "Save the scratch pane size (follow mode)"),
             ("refresh", "Refresh now"),

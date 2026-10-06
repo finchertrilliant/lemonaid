@@ -32,7 +32,7 @@ from ... import brief, claude, codex, handlers, openclaw, opencode
 from ... import resume as resume_mod
 from ...claude import notify, patch_status
 from ...claude.patcher import apply_patch, find_binary
-from ...config import TuiConfig, load_config
+from ...config import KeybindingsConfig, TuiConfig, load_config
 from ...handlers import handle_notification
 from ...lemon_watchers import (
     ModelInfo,
@@ -62,6 +62,7 @@ from . import backend_indicators, brief_cards, brief_rows, card_context, utils
 from .brief_view import BriefView
 from .error_screen import ErrorScreen
 from .help_screen import HelpScreen
+from .notes import NotesPanel
 from .screens import RenameScreen, SnoozeScreen, format_wake_time
 from .table import ClickToActTable
 from .utils import (
@@ -814,6 +815,7 @@ class LemonaidApp(App):
         self._keys_shown = True
         self._hint_timer: Timer | None = None
         self._card_layout = False
+        self._notes_open = True  # the notes key's choice; shown only in card layout too
         self._models_by_channel: dict[str, ModelInfo] = {}
         self._brief_cache = brief_cards.BriefCache()
         self._arranger = (
@@ -901,6 +903,10 @@ class LemonaidApp(App):
 
         if self.config.tui.fold_statuses or self.config.inbox.arrange:
             for b in _build_bindings(kb.fold, "toggle_fold", "Folded"):
+                self.bind(b.key, b.action, description=b.description, show=b.show)
+
+        if self.config.tui.notes is not None:
+            for b in _build_bindings(kb.notes, "toggle_notes", "Notes"):
                 self.bind(b.key, b.action, description=b.description, show=b.show)
 
         # Named keys rather than a string of alternatives: these carry a modifier.
@@ -998,6 +1004,8 @@ class LemonaidApp(App):
                 # That wants picking a row and committing to it to stay separate.
                 yield DataTable(id="history_table")
                 yield DataTable(id="snoozed_table")
+                if self.config.tui.notes is not None:
+                    yield NotesPanel(self.config.tui.notes, id="notes")
                 yield Static("", id="status")
             yield BriefView(
                 brief.pr.configured(self.config.brief.pr_state),
@@ -1188,7 +1196,7 @@ class LemonaidApp(App):
         if not self._card_layout:
             return 1, 1
 
-        rows = self.size.height - _CARD_CHROME_ROWS
+        rows = self.size.height - _CARD_CHROME_ROWS - self._notes_height()
         sessions = max(1, self.query_one("#main_table", DataTable).row_count)
         # _CARD_HEIGHT includes the first message line, but not the blank separator.
         # Account for it on brief cards without changing the existing card sizing.
@@ -1509,6 +1517,7 @@ class LemonaidApp(App):
             return  # a timer tick during shutdown, while the screen's widgets are being removed
 
         self._update_input_indicator()
+        self._refresh_notes()
         if self._brief_target is not None:
             self._wake_expired_snoozes()
             self.query_one(BriefView).update_brief(self._brief_target, self._brief_unread())
@@ -1785,15 +1794,46 @@ class LemonaidApp(App):
             self._hint_timer = None
 
         self._show_keys(False)
+        self.push_screen(HelpScreen(self._help_keys(), wide=not self._card_layout))
+
+    def _help_keys(self) -> KeybindingsConfig:
+        """The keybindings the reference lists: only the ones that are bound.
+
+        The fold and notes keys are bound only when something folds or there
+        are notes.
+        """
         kb = self.config.tui.keybindings
-        self.push_screen(
-            HelpScreen(
-                kb
-                if self.config.tui.fold_statuses or self.config.inbox.arrange
-                else dataclasses.replace(kb, fold=""),
-                wide=not self._card_layout,
-            )
-        )  # the fold key is bound only when something folds, so only then is it listed
+        if not (self.config.tui.fold_statuses or self.config.inbox.arrange):
+            kb = dataclasses.replace(kb, fold="")
+        if self.config.tui.notes is None:
+            kb = dataclasses.replace(kb, notes="")
+        return kb
+
+    def action_toggle_notes(self) -> None:
+        self._notes_open = not self._notes_open
+        self._refresh_notifications()  # refreshes the notes, then sizes the cards to them
+
+    def on_notes_panel_resized(self, _message: NotesPanel.Resized) -> None:
+        self._refresh_notifications()
+
+    def _notes_panel(self) -> NotesPanel | None:
+        panels = self.query(NotesPanel)
+        return panels.first() if panels else None
+
+    def _refresh_notes(self) -> None:
+        """Show the notes under the cards, unless hidden; a top strip has no room for them."""
+        panel = self._notes_panel()
+        if panel is None:
+            return
+
+        panel.display = self._notes_open and self._card_layout
+        if panel.display:
+            panel.reload()
+
+    def _notes_height(self) -> int:
+        """Rows the notes take from the cards, as last laid out."""
+        panel = self._notes_panel()
+        return panel.outer_size.height if panel is not None and panel.display else 0
 
     def action_toggle_keys(self) -> None:
         # An explicit toggle outranks the startup timer, which would otherwise

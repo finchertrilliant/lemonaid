@@ -331,6 +331,7 @@ def test_brief_lines_reduce_the_message_budget():
         _card_layout=True,
         size=SimpleNamespace(height=30),
         query_one=lambda *_args: SimpleNamespace(row_count=4),
+        _notes_height=lambda: 0,
     )
 
     assert app.LemonaidApp._card_shape(pane) == (1, 4)
